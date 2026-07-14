@@ -137,7 +137,8 @@ def delete_elon_view(request, elon_id):
     if request.method == 'POST':
         elon.delete()
         return redirect('profile')
-    return render(request, 'profile.html')
+    user_elons = Elon.objects.filter(owner=request.user).prefetch_related('images') if request.user.is_authenticated else Elon.objects.none()
+    return render(request, 'profile.html', {'user_elons': user_elons})
 
 def update_elon_view(request, elon_id):
     elon = get_object_or_404(Elon, id=elon_id, owner=request.user)
