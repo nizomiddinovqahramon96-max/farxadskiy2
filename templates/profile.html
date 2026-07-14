@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Profile sahifasi</h1>
+    {% if request.user.avatar %}
+    <img width="200" src="{{ request.user.avatar.url }}" alt="avatar">
+    {% endif %}
+    <h3>{{ request.user.username }}</h3>
+    <a href="{% url 'add_elon' %}" class="btn btn-success">Elon qo'shish</a>
+    <a class="btn btn-warning" href="{% url 'logout' %}">Logout</a>
+
+    <h2 class="mt-5">Mening e'lonlarim</h2>
+    {% if user_elons %}
+    <div class="row">
+        {% for elon in user_elons %}
+        <div class="col-md-4 mb-4">
+            <div class="card" style="width: 18rem;">
+                {% if elon.images.all %}
+                <img src="{{ elon.images.first.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ elon.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ elon.title }}</h5>
+                    <p class="card-text">${{ elon.price }}<br>{{ elon.km }} km</p>
+                    <a href="{% url 'update_elon' elon.id %}" class="btn btn-warning">O'zgartirish</a>
+                    <form method="post" action="{% url 'delete_elon' elon.id %}" class="d-inline" onsubmit="return confirm('Rostdan ham o\'chirasizmi?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">O'chirish</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>Sizda hali e'lonlar yo'q.</p>
+    {% endif %}
+{% endblock %}

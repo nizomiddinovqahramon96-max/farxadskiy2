@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Yoqtirgan e'lonlaringiz</h1>
+{% if liked_elons %}
+<div class="row">
+    {% for elon in liked_elons %}
+    <div class="col-md-4 mb-4">
+        <div class="card" style="width: 18rem;">
+            {% if elon.images.all %}
+            <img src="{{ elon.images.first.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ elon.title }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ elon.title }}</h5>
+                <p class="card-text">${{ elon.price }}<br>{{ elon.km }} km</p>
+                <a href="#" class="btn btn-primary">To'liq ma'lumot</a>
+                <button class="btn btn-danger mt-2 unlike-btn" data-elon-id="{{ elon.id }}">Yoqtirishni bekor qilish</button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>Siz hali hech narsani yoqtirmadingiz.</p>
+{% endif %}
+
+<script>
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+document.querySelectorAll('.unlike-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var elonId = this.getAttribute('data-elon-id');
+        var csrfToken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/elon/' + elonId + '/toggle-like/', true);
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                window.location.reload();
+            }
+        };
+        xhr.send();
+    });
+});
+</script>
+{% endblock %}

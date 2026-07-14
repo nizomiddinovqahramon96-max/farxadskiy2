@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load likes_extras %}
+{% block content %}
+<h1>Hello auto market</h1>
+
+<div class="container mb-4">
+    <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="id_brand" class="form-label">Brend</label>
+            <select name="brand" id="id_brand" class="form-select">
+                <option value="">Barcha brendlar</option>
+                {% for val, label in BRAND_CHOICES %}
+                <option value="{{ val }}" {% if selected_brand == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="id_model" class="form-label">Model</label>
+            <input type="text" name="model" id="id_model" class="form-control" placeholder="Model nomi" value="{{ selected_model }}">
+        </div>
+        <div class="col-md-2">
+            <label for="id_year" class="form-label">Yil</label>
+            <input type="number" name="year" id="id_year" class="form-control" placeholder="Masalan: 2020" value="{{ selected_year }}">
+        </div>
+        <div class="col-md-2">
+            <label for="id_price" class="form-label">Narx ($)</label>
+            <input type="number" step="0.01" name="price" id="id_price" class="form-control" placeholder="Narx" value="{{ selected_price }}">
+        </div>
+        <div class="col-md-2">
+            <label for="id_motor" class="form-label">Motor</label>
+            <select name="motor" id="id_motor" class="form-select">
+                <option value="">Barcha turlari</option>
+                {% for val, label in MOTOR_CHOICES %}
+                <option value="{{ val }}" {% if selected_motor == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary mt-2">Qidirish</button>
+            <a href="{% url 'home' %}" class="btn btn-secondary mt-2">Tozalash</a>
+        </div>
+    </form>
+</div>
+
+<div class="row">
+    {% for elon in elonlar %}
+    <div class="col-md-3 mb-4">
+        <div class="card" style="width: 18rem;">
+
+            <div style="position:relative;">
+                <div id="carousel{{ elon.id }}" class="carousel slide">
+                    <div class="carousel-inner">
+                        {% for image in elon.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ image.image.url }}" class="d-block w-100 card-img-top"
+                                 style="height: 200px; object-fit: cover;" alt="{{ elon.title }}">
+                        </div>
+                        {% empty %}
+                        <div class="carousel-item active">
+                            <img src="https://via.placeholder.com/300x200?text=Rasm+yo%27q"
+                                 class="d-block w-100 card-img-top" alt="Rasm yo'q">
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if elon.images.all|length > 1 %}
+                    <button class="carousel-control-prev" type="button"
+                            data-bs-target="#carousel{{ elon.id }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button"
+                            data-bs-target="#carousel{{ elon.id }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                    {% endif %}
+                </div>
+                {% if request.user.is_authenticated %}
+                <button class="like-btn btn btn-sm position-absolute top-0 end-0 m-2 p-1"
+                        style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;z-index:1060;"
+                        data-elon-id="{{ elon.id }}" title="Like">
+                    <span class="like-icon">{% if request.user|has_liked:elon %}❤️{% else %}🤍{% endif %}</span>
+                </button>
+                {% endif %}
+            </div>
+
+            <div class="card-body">
+                <h5 class="card-title">{{ elon.title }}</h5>
+                <p class="card-text">${{ elon.price }}<br>{{ elon.km }} km</p>
+                <a href="#" class="btn btn-primary">To'liq ma'lumot</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+document.querySelectorAll('.like-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var elonId = this.getAttribute('data-elon-id');
+        var csrfToken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/elon/' + elonId + '/toggle-like/', true);
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    var icon = btn.querySelector('.like-icon');
+                    if (data.liked) {
+                        icon.textContent = '❤️';
+                    } else {
+                        icon.textContent = '🤍';
+                    }
+                }
+            }
+        };
+        xhr.send();
+    });
+});
+</script>
+{% endblock %}
